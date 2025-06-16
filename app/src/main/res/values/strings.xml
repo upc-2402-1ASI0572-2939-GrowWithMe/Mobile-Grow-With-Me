@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">Prueba</string>
+    <string name="titulo_cultivos">Cultivos</string>
+    <string name="mis_cultivos">Mis Cultivos</string>
+    <string name="registrar_cultivo">(a) Registrar Cultivo</string>
+    <string name="nombre">Nombre</string>
+    <string name="opciones">Opciones</string>
+    <string name="cultivo_1">1. Cultivo ↑</string>
+    <string name="cultivo_2">2. Cultivo ↑</string>
+    <string name="cultivo_3">3. Cultivo ↑</string>
+    <string name="cultivo_4">4. Cultivo ↑</string>
+    <string name="registrar">Registrar</string>
+    <string name="editar">Editar</string>
+    <string name="cultivo_x">Cultivo X</string>
+    <string name="eliminar">Eliminar</string>
+    <string name="regis_cultivo">Registrar Cultivo</string>
+    <string name="navigation_drawer_open">Abrir menú</string>
+    <string name="navigation_drawer_close">Cerrar menú</string>
+    <string name="cultivos">Cultivos</string>
+    <string name="notificaciones">Notificaciones</string>
+    <string name="perfil">Perfil</string>
+    <string name="cono_cultivo">Ícono cultivo</string>
+    <string name="nombre_del_cultivo">Nombre del cultivo</string>
+    <string name="nombre_cultivo">Nombre del cultivo</string>
+    <string name="area">Área (m²)</string>
+    <string name="aceptar1">Aceptar</string>
+    <string name="cultivo_registrado_exitosamente">Cultivo registrado exitosamente 🌱</string>
+    <string name="aceptar2">Aceptar</string>
+    <string name="tipo_de_cultivo">Tipo de cultivo</string>
+
+</resources>

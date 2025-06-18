@@ -32,7 +32,25 @@
             android:text="@string/nombre_del_cultivo"
             android:textSize="16sp"
             android:textColor="@android:color/black" />
+        <TextView
+            android:id="@+id/txt_crop_category"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="Categoría"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray" />
 
+        <TextView
+            android:id="@+id/txt_crop_area"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="Área"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray" />
         <ImageButton
             android:id="@+id/btn_edit"
             android:layout_width="wrap_content"

@@ -46,6 +46,9 @@
         <activity
             android:name=".Profile.ProfileActivity"
             android:exported="false" />
+        <activity
+            android:name=".Farmers.FarmerActivity"
+            android:exported="false" />
 
     </application>
 

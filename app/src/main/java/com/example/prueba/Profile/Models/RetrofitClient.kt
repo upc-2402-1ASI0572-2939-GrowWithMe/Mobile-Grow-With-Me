@@ -1,4 +1,5 @@
 package com.example.prueba.Profile.Models
+
 import com.example.prueba.HttpUri
 import com.example.prueba.Profile.Interfaces.PlaceHolder
 import retrofit2.Retrofit
@@ -7,7 +8,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
     private const val BASE_URL = HttpUri.url
 
-    fun getClient(/*token: String*/): PlaceHolder {
+    fun getClient(string: String): PlaceHolder {
         /*
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(token))

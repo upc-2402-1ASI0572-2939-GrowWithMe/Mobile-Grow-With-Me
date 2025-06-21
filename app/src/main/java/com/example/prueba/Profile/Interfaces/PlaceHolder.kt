@@ -5,33 +5,35 @@ import com.example.prueba.Profile.Beans.ConsultantProfile
 import com.example.prueba.Profile.Beans.ConsultantProfileSchema
 import com.example.prueba.Profile.Beans.FarmerProfile
 import com.example.prueba.Profile.Beans.FarmerProfileSchema
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
+import com.google.gson.JsonObject
+import retrofit2.http.*
 
 interface PlaceHolder {
 
     // === FARMERS ===
 
-    @POST("api/v1/farmers")
+    @POST("farmers")
     fun createFarmer(@Body farmer: FarmerProfileSchema): Call<FarmerProfile>
 
-    @GET("api/v1/farmers/{id}")
+    @GET("farmers/{id}")
     fun getFarmerById(@Path("id") id: Int): Call<FarmerProfile>
 
-    @GET("api/v1/farmers")
+    @PUT("farmers/{id}")
+    fun updateFarmer(@Path("id") id: Int, @Body body: JsonObject): Call<FarmerProfile>
+    @GET("farmers")
     fun getAllFarmers(): Call<List<FarmerProfile>>
 
 
     // === CONSULTANTS ===
 
-    @POST("api/v1/consultants")
+    @POST("consultants")
     fun createConsultant(@Body consultant: ConsultantProfileSchema): Call<ConsultantProfile>
 
-    @GET("api/v1/consultants/{id}")
+    @GET("consultants/{id}")
     fun getConsultantById(@Path("id") id: Int): Call<ConsultantProfile>
 
-    @GET("api/v1/consultants")
+    @PUT("consultants/{id}")
+    fun updateConsultant(@Path("id") id: Int, @Body body: JsonObject): Call<ConsultantProfile>
+    @GET("consultants")
     fun getAllConsultants(): Call<List<ConsultantProfile>>
 }

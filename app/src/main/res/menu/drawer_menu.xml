@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_devices" android:title="Dispositivos" android:icon="@drawable/ic_device" />
     <item android:id="@+id/nav_crops" android:title="@string/cultivos" android:icon="@drawable/ic_cultivo" />
     <item android:id="@+id/nav_notifications" android:title="@string/notificaciones" android:icon="@drawable/ic_notificaciones" />
+    <item android:id="@+id/nav_consultants" android:title="Consultores" android:icon="@drawable/ic_person" />
     <item android:id="@+id/nav_profile" android:title="@string/perfil" android:icon="@drawable/ic_perfil" />
 </menu>

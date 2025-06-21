@@ -15,18 +15,31 @@ class CropViewHolder(view: View) : RecyclerView.ViewHolder(view) {
     private val btnEdit: ImageButton = view.findViewById(R.id.btn_edit)
     private val btnDelete: ImageButton = view.findViewById(R.id.btn_delete)
     private val btnViewCalendar: ImageButton = view.findViewById(R.id.btn_view)
+    private val btnGraphic: ImageButton = view.findViewById(R.id.btn_graphic)
 
     fun bind(
         crop: Crop,
+        isConsultant: Boolean,
         onEdit: (Crop, Int) -> Unit,
         onDelete: (Crop) -> Unit,
-        onView: (Crop) -> Unit
+        onView: (Crop) -> Unit,
+        onGraphic: (Crop) -> Unit
     ) {
         cropName.text = crop.productName
         cropCategory.text = crop.category
         cropArea.text = "${crop.area} m²"
-        btnEdit.setOnClickListener { onEdit(crop, adapterPosition) }
-        btnDelete.setOnClickListener { onDelete(crop) }
+
+        if (isConsultant) {
+            btnEdit.visibility = View.GONE
+            btnDelete.visibility = View.GONE
+        } else {
+            btnEdit.visibility = View.VISIBLE
+            btnDelete.visibility = View.VISIBLE
+            btnEdit.setOnClickListener { onEdit(crop, adapterPosition) }
+            btnDelete.setOnClickListener { onDelete(crop) }
+        }
+
         btnViewCalendar.setOnClickListener { onView(crop) }
+        btnGraphic.setOnClickListener { onGraphic(crop) }
     }
 }

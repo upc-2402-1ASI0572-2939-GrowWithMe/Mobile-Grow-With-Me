@@ -6,5 +6,5 @@ data class ConsultantProfileSchema(
     var phone: String,
     var email: String,
     var dni: String,
-    var photoUrl: String
+    var photoUrl: String?
 )

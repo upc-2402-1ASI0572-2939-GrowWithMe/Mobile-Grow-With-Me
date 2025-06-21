@@ -1,6 +1,7 @@
 package com.example.prueba.Crops.Interfaces
 
 import com.example.prueba.Crops.Beans.Crop
+import com.google.gson.JsonObject
 import retrofit2.Call
 import retrofit2.http.*
 
@@ -16,7 +17,7 @@ interface PlaceHolder {
     fun getCropsByFarmerId(@Path("farmerId") farmerId: Long): Call<List<Crop>>
 
     @POST("crops")
-    fun createCrop(@Body crop: Crop): Call<Crop>
+    fun createCrop(@Body crop: JsonObject): Call<Crop>
 
     @PUT("crops/{id}")
     fun updateCrop(@Path("id") id: Long, @Body crop: Crop): Call<Crop>

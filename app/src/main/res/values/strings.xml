@@ -27,5 +27,14 @@
     <string name="cultivo_registrado_exitosamente">Cultivo registrado exitosamente 🌱</string>
     <string name="aceptar2">Aceptar</string>
     <string name="tipo_de_cultivo">Tipo de cultivo</string>
+    <string name="conectar_o_desconectar">conectar_o_desconectar</string>
+    <string name="cono_dispositivo" />
+    <string name="consultor" />
+    <string name="t_tulo">Título</string>
+    <string name="descripci_n">Descripción</string>
+    <string name="humedad">Humedad (%)</string>
+    <string name="temperatura_c">Temperatura (°C)</string>
+    <string name="enviar_consulta">Enviar consulta</string>
+    <string name="foto_perfil" />
 
 </resources>

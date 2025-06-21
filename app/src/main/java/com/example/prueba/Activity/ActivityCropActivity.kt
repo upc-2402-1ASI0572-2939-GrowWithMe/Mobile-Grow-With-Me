@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.CalendarView
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -28,6 +29,7 @@ class ActivityCropActivity : AppCompatActivity() {
     private lateinit var calendarView: CalendarView
     private val registeredDates = mutableSetOf<Long>()
     private var cropId: Int = -1
+    private var isConsultant: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,8 +55,12 @@ class ActivityCropActivity : AppCompatActivity() {
 
         navView.setNavigationItemSelectedListener {
             when (it.itemId) {
+                R.id.nav_devices -> {
+                    startActivity(Intent(this, com.example.prueba.Devices.DevicesActivity::class.java))
+                }
                 R.id.nav_crops -> startActivity(Intent(this, CropsActivity::class.java))
                 R.id.nav_notifications -> startActivity(Intent(this, NotificationsActivity::class.java))
+                R.id.nav_consultants -> startActivity(Intent(this, com.example.prueba.Consultations.ConsultantActivity::class.java))
                 R.id.nav_profile -> startActivity(Intent(this, ProfileActivity::class.java))
             }
             drawerLayout.closeDrawer(GravityCompat.START)
@@ -63,6 +69,7 @@ class ActivityCropActivity : AppCompatActivity() {
 
         cropId = intent.getIntExtra("cropId", -1)
         val cropName = intent.getStringExtra("cropName") ?: "Cultivo"
+        isConsultant = intent.getBooleanExtra("isConsultant", false)
         tvCropName.text = cropName
 
         loadCropActivities(cropId)
@@ -74,9 +81,9 @@ class ActivityCropActivity : AppCompatActivity() {
             }
             val selectedDate = calendar.timeInMillis
             if (registeredDates.contains(selectedDate)) {
-                android.widget.Toast.makeText(this, "Ya hay una actividad registrada ese día", android.widget.Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Ya hay una actividad registrada ese día", Toast.LENGTH_SHORT).show()
             }
-                showRegisterActivityDialog(year, month, dayOfMonth)
+            showRegisterActivityDialog(year, month, dayOfMonth)
         }
     }
 
@@ -114,11 +121,10 @@ class ActivityCropActivity : AppCompatActivity() {
                 call: retrofit2.Call<List<com.example.prueba.Activity.Beans.CropActivity>>,
                 t: Throwable
             ) {
-                android.widget.Toast.makeText(this@ActivityCropActivity, "Error al cargar actividades", android.widget.Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ActivityCropActivity, "Error al cargar actividades", Toast.LENGTH_SHORT).show()
             }
         })
     }
-
     private fun showRegisterActivityDialog(year: Int, month: Int, day: Int) {
         val dialogView = layoutInflater.inflate(R.layout.activity_register_activity, null)
         val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
@@ -133,24 +139,11 @@ class ActivityCropActivity : AppCompatActivity() {
         val etTime = dialogView.findViewById<EditText>(R.id.et_activity_time)
         val etDescription = dialogView.findViewById<EditText>(R.id.et_activity_description)
         val btnSubmit = dialogView.findViewById<android.widget.Button>(R.id.btn_submit_activity)
-
         val btnDelete = dialogView.findViewById<android.widget.Button>(R.id.btn_delete_activity)
 
         etDate.setText(formattedDate)
         etCropName.setText(tvCropName.text.toString())
 
-        etTime.setOnClickListener {
-            val currentTime = Calendar.getInstance()
-            val hour = currentTime.get(Calendar.HOUR_OF_DAY)
-            val minute = currentTime.get(Calendar.MINUTE)
-
-            android.app.TimePickerDialog(this, { _, selectedHour, selectedMinute ->
-                val formattedTime = String.format("%02d:%02d", selectedHour, selectedMinute)
-                etTime.setText(formattedTime)
-            }, hour, minute, true).show()
-        }
-
-        // Buscar actividad ya existente para ese día
         val selectedDateKey = Calendar.getInstance().apply {
             set(year, month, day, 0, 0, 0)
             set(Calendar.MILLISECOND, 0)
@@ -158,6 +151,7 @@ class ActivityCropActivity : AppCompatActivity() {
 
         val dateToCompare = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(selectedDateKey))
         val client = com.example.prueba.Activity.Models.RetrofitClient.getClient("")
+
         client.getActivitiesByCropId(cropId).enqueue(object : retrofit2.Callback<List<com.example.prueba.Activity.Beans.CropActivity>> {
             override fun onResponse(
                 call: retrofit2.Call<List<com.example.prueba.Activity.Beans.CropActivity>>,
@@ -169,16 +163,22 @@ class ActivityCropActivity : AppCompatActivity() {
                     }
 
                     if (existing != null) {
-                        // Mostrar valores
                         val timePart = existing.activityDate.split(" ").getOrNull(1) ?: ""
                         etTime.setText(timePart)
                         etDescription.setText(existing.description)
 
-                        // Cambiar botón a "Editar"
+                        if (isConsultant) {
+                            etTime.isEnabled = false
+                            etDescription.isEnabled = false
+                            btnSubmit.visibility = android.view.View.GONE
+                            btnDelete.visibility = android.view.View.GONE
+                            dialog.show()
+                            return
+                        }
+
                         btnSubmit.text = "Editar"
                         btnDelete.visibility = android.view.View.VISIBLE
 
-                        // Editar
                         btnSubmit.setOnClickListener {
                             val updatedActivity = com.example.prueba.Activity.Beans.CropActivity(
                                 id = existing.id,
@@ -186,8 +186,6 @@ class ActivityCropActivity : AppCompatActivity() {
                                 activityDate = "${etDate.text} ${etTime.text}",
                                 description = etDescription.text.toString()
                             )
-
-
                             client.updateActivity(existing.id, updatedActivity)
                                 .enqueue(object : retrofit2.Callback<com.example.prueba.Activity.Beans.CropActivity> {
                                     override fun onResponse(
@@ -195,44 +193,52 @@ class ActivityCropActivity : AppCompatActivity() {
                                         response: retrofit2.Response<com.example.prueba.Activity.Beans.CropActivity>
                                     ) {
                                         if (response.isSuccessful) {
-                                            android.widget.Toast.makeText(this@ActivityCropActivity, "Actividad actualizada", android.widget.Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(this@ActivityCropActivity, "Actividad actualizada", Toast.LENGTH_SHORT).show()
                                             dialog.dismiss()
                                         } else {
-                                            android.widget.Toast.makeText(this@ActivityCropActivity, "Error al actualizar", android.widget.Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(this@ActivityCropActivity, "Error al actualizar", Toast.LENGTH_SHORT).show()
                                         }
                                     }
 
-                                    override fun onFailure(
-                                        call: retrofit2.Call<com.example.prueba.Activity.Beans.CropActivity>,
-                                        t: Throwable
-                                    ) {
-                                        android.widget.Toast.makeText(this@ActivityCropActivity, "Error: ${t.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                    override fun onFailure(call: retrofit2.Call<com.example.prueba.Activity.Beans.CropActivity>, t: Throwable) {
+                                        Toast.makeText(this@ActivityCropActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
                                     }
                                 })
                         }
 
-                        // Eliminar
                         btnDelete.setOnClickListener {
                             client.deleteActivity(existing.id)
                                 .enqueue(object : retrofit2.Callback<Void> {
                                     override fun onResponse(call: retrofit2.Call<Void>, response: retrofit2.Response<Void>) {
                                         if (response.isSuccessful) {
-                                            android.widget.Toast.makeText(this@ActivityCropActivity, "Actividad eliminada", android.widget.Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(this@ActivityCropActivity, "Actividad eliminada", Toast.LENGTH_SHORT).show()
                                             registeredDates.remove(selectedDateKey)
                                             dialog.dismiss()
                                         } else {
-                                            android.widget.Toast.makeText(this@ActivityCropActivity, "Error al eliminar", android.widget.Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(this@ActivityCropActivity, "Error al eliminar", Toast.LENGTH_SHORT).show()
                                         }
                                     }
 
                                     override fun onFailure(call: retrofit2.Call<Void>, t: Throwable) {
-                                        android.widget.Toast.makeText(this@ActivityCropActivity, "Error: ${t.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(this@ActivityCropActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
                                     }
                                 })
                         }
 
+                        dialog.show()
                     } else {
-                        // No hay actividad → comportamiento normal
+                        if (isConsultant) {
+                            // Mostrar formulario solo para ver
+                            etTime.isEnabled = false
+                            etDescription.isEnabled = false
+                            btnSubmit.visibility = android.view.View.GONE
+                            btnDelete.visibility = android.view.View.GONE
+                            dialog.show()
+                            return
+                        }
+
+                        btnDelete.visibility = android.view.View.GONE
+
                         btnSubmit.setOnClickListener {
                             val description = etDescription.text.toString().trim()
                             val time = etTime.text.toString().trim()
@@ -253,31 +259,30 @@ class ActivityCropActivity : AppCompatActivity() {
                             client.createActivity(newActivity).enqueue(object : retrofit2.Callback<com.example.prueba.Activity.Beans.CropActivity> {
                                 override fun onResponse(call: retrofit2.Call<com.example.prueba.Activity.Beans.CropActivity>, response: retrofit2.Response<com.example.prueba.Activity.Beans.CropActivity>) {
                                     if (response.isSuccessful) {
-                                        android.widget.Toast.makeText(this@ActivityCropActivity, "Actividad registrada", android.widget.Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(this@ActivityCropActivity, "Actividad registrada", Toast.LENGTH_SHORT).show()
                                         registeredDates.add(selectedDateKey)
                                         dialog.dismiss()
                                     } else {
-                                        android.widget.Toast.makeText(this@ActivityCropActivity, "Error al registrar", android.widget.Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(this@ActivityCropActivity, "Error al registrar", Toast.LENGTH_SHORT).show()
                                     }
                                 }
 
                                 override fun onFailure(call: retrofit2.Call<com.example.prueba.Activity.Beans.CropActivity>, t: Throwable) {
-                                    android.widget.Toast.makeText(this@ActivityCropActivity, "Error: ${t.message}", android.widget.Toast.LENGTH_LONG).show()
+                                    Toast.makeText(this@ActivityCropActivity, "Error: ${t.message}", Toast.LENGTH_LONG).show()
                                 }
                             })
                         }
+
+                        dialog.show()
                     }
                 }
             }
 
             override fun onFailure(call: retrofit2.Call<List<com.example.prueba.Activity.Beans.CropActivity>>, t: Throwable) {
-                android.widget.Toast.makeText(this@ActivityCropActivity, "Error al consultar actividad", android.widget.Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ActivityCropActivity, "Error al consultar actividad", Toast.LENGTH_SHORT).show()
             }
         })
-
-        dialog.show()
     }
-
 
     @Deprecated("Usar OnBackPressedDispatcher")
     override fun onBackPressed() {

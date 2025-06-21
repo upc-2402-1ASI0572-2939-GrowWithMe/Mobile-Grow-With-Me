@@ -8,7 +8,7 @@ class ConsultantProfile : Serializable {
     var lastName: String
     var email: String
     var phone: String
-    var photoUrl: String
+    var photoUrl: String?
     var dni: String
 
     constructor(
@@ -17,7 +17,7 @@ class ConsultantProfile : Serializable {
         lastName: String,
         email: String,
         phone: String,
-        photoUrl: String,
+        photoUrl: String?,
         dni: String
     ) {
         this.id = id
@@ -34,7 +34,7 @@ class ConsultantProfile : Serializable {
         lastName: String,
         email: String,
         phone: String,
-        photoUrl: String,
+        photoUrl: String?,
         dni: String
     ) {
         this.id = 0

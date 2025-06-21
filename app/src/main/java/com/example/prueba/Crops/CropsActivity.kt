@@ -1,12 +1,11 @@
 package com.example.prueba.Crops
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Spinner
+import android.view.Menu
+import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -23,6 +22,7 @@ import com.example.prueba.Notifications.NotificationsActivity
 import com.example.prueba.Profile.ProfileActivity
 import com.example.prueba.R
 import com.google.android.material.navigation.NavigationView
+import com.google.gson.JsonObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -36,6 +36,18 @@ class CropsActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var toolbar: Toolbar
+
+    private val isConsultant: Boolean
+        get() {
+            val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+            return prefs.getString("user_role", "Agricultor") == "Consultor"
+        }
+
+    private val userProfileId: Int
+        get() {
+            val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+            return prefs.getInt("profile_id", -1)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,14 +67,14 @@ class CropsActivity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
+        filterMenuByRole()
+
         navView.setNavigationItemSelectedListener {
             when (it.itemId) {
-                R.id.nav_notifications -> {
-                    startActivity(Intent(this, NotificationsActivity::class.java))
-                }
-                R.id.nav_profile -> {
-                    startActivity(Intent(this, ProfileActivity::class.java))
-                }
+                R.id.nav_devices -> startActivity(Intent(this, com.example.prueba.Devices.DevicesActivity::class.java))
+                R.id.nav_notifications -> startActivity(Intent(this, NotificationsActivity::class.java))
+                R.id.nav_consultants -> startActivity(Intent(this, com.example.prueba.Consultations.ConsultantActivity::class.java))
+                R.id.nav_profile -> startActivity(Intent(this, ProfileActivity::class.java))
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true
@@ -71,27 +83,42 @@ class CropsActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recycler_crops)
         val registerButton = findViewById<Button>(R.id.btn_register_crop)
 
-        adapter = CropAdapter(crops,
+        adapter = CropAdapter(
+            crops,
+            isConsultant,
             onEdit = { crop, position -> showEditCropDialog(crop, position) },
             onDelete = { crop -> showDeleteConfirmationDialog(crop) },
-            onView = { crop -> openCropActivities(crop) }
+            onView = { crop -> openCropActivities(crop) },
+            onGraphic = { crop -> openDashboardActivity(crop) }
         )
+
+
 
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 
-        registerButton.setOnClickListener {
-            showRegisterCropDialog()
+        if (isConsultant) {
+            registerButton.visibility = Button.GONE
+        } else {
+            registerButton.setOnClickListener {
+                showRegisterCropDialog()
+            }
         }
 
-        val api: PlaceHolder = RetrofitClient.getClient("")
 
+        val api: PlaceHolder = RetrofitClient.getClient("")
         api.getCrops().enqueue(object : Callback<List<Crop>> {
             override fun onResponse(call: Call<List<Crop>>, response: Response<List<Crop>>) {
                 if (response.isSuccessful) {
                     val allCrops = response.body() ?: emptyList()
                     crops.clear()
-                    crops.addAll(allCrops.filter { it.profileId == 1 })
+                    if (isConsultant) {
+                        crops.addAll(allCrops)
+                    } else {
+                        val firstProfileId = allCrops.firstOrNull()?.profileId
+                        crops.addAll(allCrops.filter { it.profileId == firstProfileId })
+                    }
+
                     adapter.notifyDataSetChanged()
                 } else {
                     Log.e("API_RESPONSE", "Respuesta no exitosa: ${response.code()}")
@@ -102,6 +129,25 @@ class CropsActivity : AppCompatActivity() {
                 t.printStackTrace()
             }
         })
+    }
+
+    private fun filterMenuByRole() {
+        val menu: Menu = navView.menu
+        if (isConsultant) {
+            menu.findItem(R.id.nav_consultants)?.isVisible = false
+            menu.findItem(R.id.nav_devices)?.title = "Agricultores"
+        } else {
+            menu.findItem(R.id.nav_crops)?.isVisible = true
+            menu.findItem(R.id.nav_consultants)?.isVisible = true
+            menu.findItem(R.id.nav_devices)?.title = "Dispositivos"
+        }
+    }
+
+    private fun openDashboardActivity(crop: Crop) {
+        val intent = Intent(this, com.example.prueba.Monitoring.DashboardActivity::class.java)
+        intent.putExtra("cropId", crop.id)
+        intent.putExtra("cropName", crop.productName)
+        startActivity(intent)
     }
 
     private fun openCropActivities(crop: Crop) {
@@ -140,10 +186,21 @@ class CropsActivity : AppCompatActivity() {
             val area = etArea.text.toString().toDoubleOrNull() ?: 0.0
 
             if (name.isNotBlank()) {
-                val crop = Crop(0, "TEMP_CODE", name, type, area.toInt(), "Lima", "Activo", 100, 150, 1)
+                val json = JsonObject().apply {
+                    addProperty("id", 0)
+                    addProperty("productName", name)
+                    addProperty("code", "TEMP_CODE")
+                    addProperty("category", type)
+                    addProperty("area", area.toInt())
+                    addProperty("location", "Lima")
+                    addProperty("status", "Activo")
+                    addProperty("cost", 100)
+                    addProperty("profitReturn", 150)
+                    addProperty("profileId", userProfileId)
+                }
 
                 val api = RetrofitClient.getClient("")
-                api.createCrop(crop).enqueue(object : Callback<Crop> {
+                api.createCrop(json).enqueue(object : Callback<Crop> {
                     override fun onResponse(call: Call<Crop>, response: Response<Crop>) {
                         if (response.isSuccessful) {
                             crops.add(response.body()!!)

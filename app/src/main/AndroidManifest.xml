@@ -16,7 +16,7 @@
         tools:targetApi="31">
 
         <activity
-            android:name=".Crops.CropsActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,8 +25,28 @@
         </activity>
 
         <activity
+            android:name=".Crops.CropsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".Activity.ActivityCropActivity"
             android:exported="false" />
+        <activity
+            android:name=".Monitoring.DashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Devices.DevicesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Consultations.ConsultantActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Consultations.ConsultationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Profile.ProfileActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

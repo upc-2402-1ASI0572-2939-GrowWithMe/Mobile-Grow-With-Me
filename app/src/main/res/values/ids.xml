@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="txt_device_name" type="id" />
+    <item name="txt_device_type" type="id" />
+    <item name="txt_device_status" type="id" />
+    <item name="btn_toggle_connection" type="id" />
+    <item name="img_device" type="id" />
+    <item name="label_device_name" type="id" />
+    <item name="et_device_name" type="id" />
+    <item name="label_device_token" type="id" />
+    <item name="et_device_token" type="id" />
+    <item name="label_device_type" type="id" />
+    <item name="spinner_device_type" type="id" />
+    <item name="btn_submit_device" type="id" />
+    <item name="btn_select_image" type="id" />
+    <item name="et_first_name" type="id" />
+    <item name="et_last_name" type="id" />
+    <item name="et_email" type="id" />
+    <item name="et_phone" type="id" />
+    <item name="et_dni" type="id" />
+    <item name="btn_save" type="id" />
+</resources>

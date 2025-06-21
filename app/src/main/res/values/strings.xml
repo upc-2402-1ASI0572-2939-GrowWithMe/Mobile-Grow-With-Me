@@ -36,5 +36,7 @@
     <string name="temperatura_c">Temperatura (°C)</string>
     <string name="enviar_consulta">Enviar consulta</string>
     <string name="foto_perfil" />
+    <string name="ver_consultas" />
+    <string name="ver_cultivos" />
 
 </resources>

@@ -5,7 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
 import android.widget.*
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -41,29 +43,64 @@ class ProfileActivity : AppCompatActivity() {
 
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
+        supportActionBar?.title = "Perfil"
 
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
+
+        val toggle = ActionBarDrawerToggle(
+            this, drawerLayout, toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+        filterMenuByRole() // <-- SE AGREGA ESTA LÍNEA
 
         txtFullName = findViewById(R.id.txt_full_name)
         txtEmail = findViewById(R.id.txt_email)
         txtPhone = findViewById(R.id.txt_phone)
         imgProfile = findViewById(R.id.img_profile)
+        btnEdit = findViewById(R.id.btn_edit_profile)
+        btnLogout = findViewById(R.id.btn_logout)
+
         imgProfile.setOnClickListener {
             showImagePickerDialog()
         }
 
-        btnEdit = findViewById(R.id.btn_edit_profile)
-        btnLogout = findViewById(R.id.btn_logout)
-
         navView.setNavigationItemSelectedListener {
             when (it.itemId) {
+                R.id.nav_devices -> {
+                    startActivity(Intent(this, com.example.prueba.Devices.DevicesActivity::class.java))
+                    finish()
+                }
+                R.id.nav_notifications -> {
+                    startActivity(Intent(this, com.example.prueba.Notifications.NotificationsActivity::class.java))
+                    finish()
+                }
+                R.id.nav_profile -> {
+
+                }
+                R.id.nav_consultants -> {
+                    startActivity(Intent(this, com.example.prueba.Consultations.ConsultantActivity::class.java))
+                    finish()
+                }
+                R.id.nav_crops -> {
+                    startActivity(Intent(this, com.example.prueba.Crops.CropsActivity::class.java))
+                    finish()
+                }
                 R.id.btn_edit_profile -> showEditProfileDialog()
-                R.id.btn_logout -> finishAffinity()
+                R.id.btn_logout -> {
+                    startActivity(Intent(this, com.example.prueba.MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    })
+                }
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true
         }
+
 
         btnEdit.setOnClickListener {
             showEditProfileDialog()
@@ -76,6 +113,19 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         loadProfile()
+    }
+    private fun filterMenuByRole() {
+        val menu: Menu = navView.menu
+        val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        val role = prefs.getString("user_role", "Agricultor")
+        if (role == "Consultor") {
+            menu.findItem(R.id.nav_consultants)?.title = "Agricultores"
+            menu.findItem(R.id.nav_devices)?.isVisible = false
+        } else {
+            menu.findItem(R.id.nav_crops)?.isVisible = true
+            menu.findItem(R.id.nav_consultants)?.title = "Consultores"
+            menu.findItem(R.id.nav_devices)?.isVisible = true
+        }
     }
     private fun openCamera() {
         Toast.makeText(this, "Abrir cámara (a implementar)", Toast.LENGTH_SHORT).show()
@@ -223,7 +273,6 @@ class ProfileActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun showConfirmationDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_editprofile_confirmation, null)

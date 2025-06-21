@@ -46,7 +46,7 @@ class CropsActivity : AppCompatActivity() {
     private val userProfileId: Int
         get() {
             val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-            return prefs.getInt("profile_id", -1)
+            return prefs.getInt("profile_id", 1)
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +73,13 @@ class CropsActivity : AppCompatActivity() {
             when (it.itemId) {
                 R.id.nav_devices -> startActivity(Intent(this, com.example.prueba.Devices.DevicesActivity::class.java))
                 R.id.nav_notifications -> startActivity(Intent(this, NotificationsActivity::class.java))
-                R.id.nav_consultants -> startActivity(Intent(this, com.example.prueba.Consultations.ConsultantActivity::class.java))
+                R.id.nav_consultants -> {
+                    val target = if (isConsultant)
+                        com.example.prueba.Farmers.FarmerActivity::class.java
+                    else
+                        com.example.prueba.Consultations.ConsultantActivity::class.java
+                    startActivity(Intent(this, target))
+                }
                 R.id.nav_profile -> startActivity(Intent(this, ProfileActivity::class.java))
             }
             drawerLayout.closeDrawer(GravityCompat.START)
@@ -92,8 +98,6 @@ class CropsActivity : AppCompatActivity() {
             onGraphic = { crop -> openDashboardActivity(crop) }
         )
 
-
-
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 
@@ -105,18 +109,23 @@ class CropsActivity : AppCompatActivity() {
             }
         }
 
-
         val api: PlaceHolder = RetrofitClient.getClient("")
         api.getCrops().enqueue(object : Callback<List<Crop>> {
             override fun onResponse(call: Call<List<Crop>>, response: Response<List<Crop>>) {
                 if (response.isSuccessful) {
                     val allCrops = response.body() ?: emptyList()
                     crops.clear()
-                    if (isConsultant) {
+
+                    val selectedProfileId = intent.getIntExtra("selected_profile_id", -1)
+                    if (selectedProfileId != -1) {
+                        // Desde FarmerActivity → mostrar solo sus cultivos
+                        crops.addAll(allCrops.filter { it.profileId == selectedProfileId })
+                    } else if (isConsultant) {
+                        // Consultor desde el menú → mostrar todos
                         crops.addAll(allCrops)
                     } else {
-                        val firstProfileId = allCrops.firstOrNull()?.profileId
-                        crops.addAll(allCrops.filter { it.profileId == firstProfileId })
+                        // Agricultor → mostrar solo sus cultivos
+                        crops.addAll(allCrops.filter { it.profileId == userProfileId })
                     }
 
                     adapter.notifyDataSetChanged()
@@ -134,12 +143,12 @@ class CropsActivity : AppCompatActivity() {
     private fun filterMenuByRole() {
         val menu: Menu = navView.menu
         if (isConsultant) {
-            menu.findItem(R.id.nav_consultants)?.isVisible = false
-            menu.findItem(R.id.nav_devices)?.title = "Agricultores"
+            menu.findItem(R.id.nav_consultants)?.title = "Agricultores"
+            menu.findItem(R.id.nav_devices)?.isVisible = false
         } else {
             menu.findItem(R.id.nav_crops)?.isVisible = true
-            menu.findItem(R.id.nav_consultants)?.isVisible = true
-            menu.findItem(R.id.nav_devices)?.title = "Dispositivos"
+            menu.findItem(R.id.nav_consultants)?.title = "Consultores"
+            menu.findItem(R.id.nav_devices)?.isVisible = true
         }
     }
 
@@ -154,6 +163,7 @@ class CropsActivity : AppCompatActivity() {
         val intent = Intent(this, ActivityCropActivity::class.java)
         intent.putExtra("cropId", crop.id)
         intent.putExtra("cropName", crop.productName)
+        intent.putExtra("isConsultant", isConsultant) // 👈 SE AGREGA AQUÍ EL ROL
         startActivity(intent)
     }
 

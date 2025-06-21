@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.Menu
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -92,14 +93,14 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun filterMenuByRole() {
-        val menu = navView.menu
+        val menu: Menu = navView.menu
         if (isConsultant) {
-            menu.findItem(R.id.nav_consultants)?.isVisible = false
-            menu.findItem(R.id.nav_devices)?.title = "Agricultores"
+            menu.findItem(R.id.nav_consultants)?.title = "Agricultores"
+            menu.findItem(R.id.nav_devices)?.isVisible = false
         } else {
             menu.findItem(R.id.nav_crops)?.isVisible = true
-            menu.findItem(R.id.nav_consultants)?.isVisible = true
-            menu.findItem(R.id.nav_devices)?.title = "Dispositivos"
+            menu.findItem(R.id.nav_consultants)?.title = "Consultores"
+            menu.findItem(R.id.nav_devices)?.isVisible = true
         }
     }
 

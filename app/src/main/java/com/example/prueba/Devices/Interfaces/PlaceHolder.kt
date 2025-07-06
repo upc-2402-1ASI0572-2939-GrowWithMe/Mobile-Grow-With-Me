@@ -1,20 +1,22 @@
 package com.example.prueba.Devices.Interfaces
 
 import com.example.prueba.Devices.Beans.Device
-import com.google.gson.JsonObject
 import retrofit2.Call
 import retrofit2.http.*
 
 interface PlaceHolder {
 
     @POST("devices")
-    fun createDevice(@Body device: JsonObject): Call<Device>
+    fun createDevice(
+        @Query("cropId") cropId: Long,
+        @Query("farmerId") farmerId: Int,
+        @Query("name") name: String,
+        @Query("isActive") isActive: Boolean
+    ): Call<Device>
 
-    @GET("devices")
-    fun getDevices(): Call<List<Device>>
-
-    @GET("devices")
+    @GET("devices/farmer")
     fun getDevicesByFarmerId(@Query("farmerId") farmerId: String): Call<List<Device>>
-    @PUT("devices/{id}")
-    fun updateDeviceStatus(@Path("id") deviceId: Int, @Body statusUpdate: JsonObject): Call<Device>
+
+    @GET("devices/sensor-data/{deviceId}")
+    fun getSensorData(@Path("deviceId") deviceId: Long): Call<Device>
 }

@@ -6,8 +6,6 @@ class Consultation {
     var title: String
     var description: String
     var status: String
-    var humidity: Int
-    var temperature: Float
 
     constructor(
         id: Int,
@@ -15,15 +13,11 @@ class Consultation {
         title: String,
         description: String,
         status: String,
-        humidity: Int,
-        temperature: Float
     ) {
         this.id = id
         this.farmerId = farmerId
         this.title = title
         this.description = description
         this.status = status
-        this.humidity = humidity
-        this.temperature = temperature
     }
 }

@@ -1,13 +1,17 @@
 package com.example.prueba.Crops.Beans
 
+import android.app.Activity
+import java.util.*
+
 data class CropSchema(
-    var code: String,
+    var farmerId: Int,
+    var cropActivities: List<Activity>,
     var productName: String,
+    var code: String,
     var category: String,
-    var area: Int,
-    var location: String,
     var status: String,
+    var area: Float,
+    var location: String,
     var cost: Int,
-    var profitReturn: Int,
-    var profileId: Int
+    var registrationDate: String
 )

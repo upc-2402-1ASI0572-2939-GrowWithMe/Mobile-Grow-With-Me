@@ -7,9 +7,10 @@ import retrofit2.http.*
 
 interface PlaceHolder {
 
-    @GET("consultations")
-    fun getConsultationsByFarmerId(@Query("farmerId") farmerId: Int): Call<List<Consultation>>
-
+    @GET("consultations/{farmerId}")
+    fun getConsultationsByFarmerId(@Path("farmerId") farmerId: Int): Call<List<Consultation>>
     @POST("consultations")
     fun createConsultation(@Body consultation: JsonObject): Call<Consultation>
+    @GET("consultations")
+    fun getConsultation(): Call<List<Consultation>>
 }

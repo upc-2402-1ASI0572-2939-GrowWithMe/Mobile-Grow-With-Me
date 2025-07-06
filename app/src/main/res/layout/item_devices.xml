@@ -39,10 +39,10 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/txt_device_type"
+                android:id="@+id/txt_crop_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tipo de sensor"
+                android:text="Cultivo: Desconocido"
                 android:textSize="14sp"
                 android:textColor="@android:color/darker_gray" />
 
@@ -50,17 +50,9 @@
                 android:id="@+id/txt_device_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Estado: Desconectado"
+                android:text="Estado: Activo"
                 android:textSize="14sp"
-                android:textColor="@android:color/holo_red_dark" />
+                android:textColor="@android:color/holo_green_dark" />
         </LinearLayout>
-
-        <ImageButton
-            android:id="@+id/btn_toggle_connection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_conectar_o_desconectar"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/conectar_o_desconectar" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

@@ -19,4 +19,5 @@
     <item name="et_phone" type="id" />
     <item name="et_dni" type="id" />
     <item name="btn_save" type="id" />
+    <item name="iv_selected_photo" type="id" />
 </resources>

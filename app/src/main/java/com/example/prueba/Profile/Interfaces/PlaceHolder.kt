@@ -11,29 +11,11 @@ import retrofit2.http.*
 interface PlaceHolder {
 
     // === FARMERS ===
-
-    @POST("farmers")
-    fun createFarmer(@Body farmer: FarmerProfileSchema): Call<FarmerProfile>
-
-    @GET("farmers/{id}")
-    fun getFarmerById(@Path("id") id: Int): Call<FarmerProfile>
-
-    @PUT("farmers/{id}")
-    fun updateFarmer(@Path("id") id: Int, @Body body: JsonObject): Call<FarmerProfile>
-    @GET("farmers")
+    @GET("users/farmers")
     fun getAllFarmers(): Call<List<FarmerProfile>>
 
 
     // === CONSULTANTS ===
-
-    @POST("consultants")
-    fun createConsultant(@Body consultant: ConsultantProfileSchema): Call<ConsultantProfile>
-
-    @GET("consultants/{id}")
-    fun getConsultantById(@Path("id") id: Int): Call<ConsultantProfile>
-
-    @PUT("consultants/{id}")
-    fun updateConsultant(@Path("id") id: Int, @Body body: JsonObject): Call<ConsultantProfile>
-    @GET("consultants")
+    @GET("users/consultants")
     fun getAllConsultants(): Call<List<ConsultantProfile>>
 }

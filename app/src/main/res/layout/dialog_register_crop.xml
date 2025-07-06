@@ -28,9 +28,20 @@
         android:id="@+id/et_crop_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="@string/nombre_cultivo"
+        android:hint="Nombre del cultivo"
         android:inputType="text"
         app:layout_constraintTop_toBottomOf="@id/spinner_crop_category"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp"/>
+
+    <EditText
+        android:id="@+id/et_crop_code"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Código"
+        android:inputType="text"
+        app:layout_constraintTop_toBottomOf="@id/et_crop_name"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="12dp"/>
@@ -39,9 +50,20 @@
         android:id="@+id/et_crop_area"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="@string/area"
+        android:hint="Área (m²)"
         android:inputType="numberDecimal"
-        app:layout_constraintTop_toBottomOf="@id/et_crop_name"
+        app:layout_constraintTop_toBottomOf="@id/et_crop_code"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp"/>
+
+    <EditText
+        android:id="@+id/et_crop_location"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Ubicación"
+        android:inputType="text"
+        app:layout_constraintTop_toBottomOf="@id/et_crop_area"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="12dp"/>
@@ -50,10 +72,10 @@
         android:id="@+id/btn_accept"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/aceptar1"
+        android:text="Aceptar"
         android:textColor="@android:color/white"
         android:backgroundTint="#225A47"
-        app:layout_constraintTop_toBottomOf="@id/et_crop_area"
+        app:layout_constraintTop_toBottomOf="@id/et_crop_location"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"/>

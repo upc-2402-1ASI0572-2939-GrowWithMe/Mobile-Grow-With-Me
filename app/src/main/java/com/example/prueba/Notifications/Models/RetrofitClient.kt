@@ -1,0 +1,25 @@
+package com.example.prueba.Notifications.Models
+
+import com.example.prueba.Crops.Models.AuthInterceptor
+import com.example.prueba.HttpUri
+import com.example.prueba.Notifications.Interfaces.PlaceHolder
+import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
+object RetrofitClient {
+    private const val BASE_URL = HttpUri.url
+
+    fun getClient(token: String): PlaceHolder {
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(AuthInterceptor(token))
+            .build()
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(PlaceHolder::class.java)
+    }
+}

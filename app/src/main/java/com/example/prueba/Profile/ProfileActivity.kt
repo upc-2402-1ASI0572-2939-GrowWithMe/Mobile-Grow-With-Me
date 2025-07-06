@@ -11,18 +11,24 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.edit
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import com.cloudinary.android.MediaManager
+import com.example.prueba.Consultations.ConsultationActivity
 import com.example.prueba.MainActivity
+import com.example.prueba.Notifications.NotificationsActivity
 import com.example.prueba.Profile.Beans.ConsultantProfile
 import com.example.prueba.Profile.Beans.FarmerProfile
 import com.example.prueba.Profile.Models.RetrofitClient
 import com.example.prueba.R
 import com.google.android.material.navigation.NavigationView
-import com.google.gson.JsonObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.net.URL
+import android.graphics.BitmapFactory
+import android.os.StrictMode
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -37,9 +43,28 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var btnEdit: Button
     private lateinit var btnLogout: Button
 
+    private val isConsultant: Boolean
+        get() {
+            val prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE)
+            return prefs.getString("role", "FARMER_ROLE") == "CONSULTANT_ROLE"
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
+
+        // ✅ Inicializar Cloudinary si no ha sido inicializado
+        try {
+            MediaManager.get()
+        } catch (e: Exception) {
+            val config = hashMapOf(
+                "cloud_name" to getString(R.string.cloudinary_cloud_name),
+                "api_key" to getString(R.string.cloudinary_api_key),
+                "api_secret" to getString(R.string.cloudinary_api_secret),
+                "secure" to "true"
+            )
+            MediaManager.init(this, config)
+        }
 
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -56,7 +81,7 @@ class ProfileActivity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        filterMenuByRole() // <-- SE AGREGA ESTA LÍNEA
+        filterMenuByRole()
 
         txtFullName = findViewById(R.id.txt_full_name)
         txtEmail = findViewById(R.id.txt_email)
@@ -76,12 +101,13 @@ class ProfileActivity : AppCompatActivity() {
                     finish()
                 }
                 R.id.nav_notifications -> {
-                    startActivity(Intent(this, com.example.prueba.Notifications.NotificationsActivity::class.java))
-                    finish()
+                    val target = if (isConsultant)
+                        ConsultationActivity::class.java
+                    else
+                        NotificationsActivity::class.java
+                    startActivity(Intent(this, target))
                 }
-                R.id.nav_profile -> {
-
-                }
+                R.id.nav_profile -> { }
                 R.id.nav_consultants -> {
                     startActivity(Intent(this, com.example.prueba.Consultations.ConsultantActivity::class.java))
                     finish()
@@ -90,9 +116,8 @@ class ProfileActivity : AppCompatActivity() {
                     startActivity(Intent(this, com.example.prueba.Crops.CropsActivity::class.java))
                     finish()
                 }
-                R.id.btn_edit_profile -> showEditProfileDialog()
                 R.id.btn_logout -> {
-                    startActivity(Intent(this, com.example.prueba.MainActivity::class.java).apply {
+                    startActivity(Intent(this, MainActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     })
                 }
@@ -101,12 +126,13 @@ class ProfileActivity : AppCompatActivity() {
             true
         }
 
-
         btnEdit.setOnClickListener {
-            showEditProfileDialog()
+            // Funcionalidad futura
         }
 
         btnLogout.setOnClickListener {
+            val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+            prefs.edit { clear() }
             startActivity(Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             })
@@ -114,11 +140,13 @@ class ProfileActivity : AppCompatActivity() {
 
         loadProfile()
     }
+
     private fun filterMenuByRole() {
         val menu: Menu = navView.menu
         val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-        val role = prefs.getString("user_role", "Agricultor")
-        if (role == "Consultor") {
+        val role = prefs.getString("role", "FARMER_ROLE")
+
+        if (role == "CONSULTANT_ROLE") {
             menu.findItem(R.id.nav_consultants)?.title = "Agricultores"
             menu.findItem(R.id.nav_devices)?.isVisible = false
         } else {
@@ -127,12 +155,81 @@ class ProfileActivity : AppCompatActivity() {
             menu.findItem(R.id.nav_devices)?.isVisible = true
         }
     }
-    private fun openCamera() {
-        Toast.makeText(this, "Abrir cámara (a implementar)", Toast.LENGTH_SHORT).show()
-    }
 
-    private fun openGallery() {
-        Toast.makeText(this, "Abrir galería (a implementar)", Toast.LENGTH_SHORT).show()
+    private fun loadProfile() {
+        val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        val role = prefs.getString("role", "FARMER_ROLE") ?: "FARMER_ROLE"
+        val userId = prefs.getInt("user_id", -1)
+        val api = RetrofitClient.getClient("")
+
+        if (userId == -1) {
+            Toast.makeText(this, "ID de usuario no encontrado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (role == "CONSULTANT_ROLE") {
+            api.getAllConsultants().enqueue(object : Callback<List<ConsultantProfile>> {
+                override fun onResponse(call: Call<List<ConsultantProfile>>, response: Response<List<ConsultantProfile>>) {
+                    val consultant = response.body()?.find { it.id == userId }
+                    consultant?.let {
+                        txtFullName.text = "${it.firstName} ${it.lastName}"
+                        txtEmail.text = it.email
+                        txtPhone.text = it.phone
+
+                        try {
+                            val imageUrl = MediaManager.get()
+                                .url()
+                                .secure(true)
+                                .generate(it.photoUrl)
+
+                            val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+                            StrictMode.setThreadPolicy(policy)
+
+                            val input = URL(imageUrl).openStream()
+                            val bitmap = BitmapFactory.decodeStream(input)
+                            imgProfile.setImageBitmap(bitmap)
+                        } catch (e: Exception) {
+                            imgProfile.setImageResource(R.drawable.ic_person)
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<List<ConsultantProfile>>, t: Throwable) {
+                    Log.e("PROFILE", "Error", t)
+                }
+            })
+        } else {
+            api.getAllFarmers().enqueue(object : Callback<List<FarmerProfile>> {
+                override fun onResponse(call: Call<List<FarmerProfile>>, response: Response<List<FarmerProfile>>) {
+                    val farmer = response.body()?.find { it.id == userId }
+                    farmer?.let {
+                        txtFullName.text = "${it.firstName} ${it.lastName}"
+                        txtEmail.text = it.email
+                        txtPhone.text = it.phone
+
+                        try {
+                            val imageUrl = MediaManager.get()
+                                .url()
+                                .secure(true)
+                                .generate(it.photoUrl)
+
+                            val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+                            StrictMode.setThreadPolicy(policy)
+
+                            val input = URL(imageUrl).openStream()
+                            val bitmap = BitmapFactory.decodeStream(input)
+                            imgProfile.setImageBitmap(bitmap)
+                        } catch (e: Exception) {
+                            imgProfile.setImageResource(R.drawable.ic_person)
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<List<FarmerProfile>>, t: Throwable) {
+                    Log.e("PROFILE", "Error", t)
+                }
+            })
+        }
     }
 
     private fun showImagePickerDialog() {
@@ -148,129 +245,19 @@ class ProfileActivity : AppCompatActivity() {
         builder.show()
     }
 
-    private fun loadProfile() {
-        val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-        val role = prefs.getString("user_role", "Agricultor") ?: "Agricultor"
-        val api = RetrofitClient.getClient("")
-
-        if (role == "Consultor") {
-            api.getConsultantById(2).enqueue(object : Callback<ConsultantProfile> {
-                override fun onResponse(call: Call<ConsultantProfile>, response: Response<ConsultantProfile>) {
-                    response.body()?.let {
-                        txtFullName.text = "${it.firstName} ${it.lastName}"
-                        txtEmail.text = it.email
-                        txtPhone.text = it.phone
-                    }
-                }
-                override fun onFailure(call: Call<ConsultantProfile>, t: Throwable) {
-                    Log.e("PROFILE", "Error", t)
-                }
-            })
-        } else {
-            api.getFarmerById(3).enqueue(object : Callback<FarmerProfile> {
-                override fun onResponse(call: Call<FarmerProfile>, response: Response<FarmerProfile>) {
-                    response.body()?.let {
-                        txtFullName.text = "${it.firstName} ${it.lastName}"
-                        txtEmail.text = it.email
-                        txtPhone.text = it.phone
-                    }
-                }
-                override fun onFailure(call: Call<FarmerProfile>, t: Throwable) {
-                    Log.e("PROFILE", "Error", t)
-                }
-            })
-        }
+    private fun openCamera() {
+        Toast.makeText(this, "Abrir cámara (a implementar)", Toast.LENGTH_SHORT).show()
     }
 
-    private fun showEditProfileDialog() {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_profile, null)
-        val etFirstName = view.findViewById<EditText>(R.id.et_first_name)
-        val etLastName = view.findViewById<EditText>(R.id.et_last_name)
-        val etEmail = view.findViewById<EditText>(R.id.et_email)
-        val etPhone = view.findViewById<EditText>(R.id.et_phone)
-        val etDni = view.findViewById<EditText>(R.id.et_dni)
-        val btnSave = view.findViewById<Button>(R.id.btn_save)
+    private fun openGallery() {
+        Toast.makeText(this, "Abrir galería (a implementar)", Toast.LENGTH_SHORT).show()
+    }
 
-        val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-        val role = prefs.getString("user_role", "Agricultor") ?: "Agricultor"
-        val api = RetrofitClient.getClient("")
-
-        val dialog = AlertDialog.Builder(this).setView(view).create()
-
-        fun showAndPopulateDialog(
-            firstName: String,
-            lastName: String,
-            email: String,
-            phone: String,
-            dni: String
-        ) {
-            etFirstName.setText(firstName)
-            etLastName.setText(lastName)
-            etEmail.setText(email)
-            etPhone.setText(phone)
-            etDni.setText(dni)
-            dialog.show()
-        }
-
-        if (role == "Consultor") {
-            api.getConsultantById(2).enqueue(object : Callback<ConsultantProfile> {
-                override fun onResponse(call: Call<ConsultantProfile>, response: Response<ConsultantProfile>) {
-                    response.body()?.let {
-                        showAndPopulateDialog(it.firstName, it.lastName, it.email, it.phone, it.dni ?: "")
-                    }
-                }
-
-                override fun onFailure(call: Call<ConsultantProfile>, t: Throwable) {}
-            })
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
         } else {
-            api.getFarmerById(3).enqueue(object : Callback<FarmerProfile> {
-                override fun onResponse(call: Call<FarmerProfile>, response: Response<FarmerProfile>) {
-                    response.body()?.let {
-                        showAndPopulateDialog(it.firstName, it.lastName, it.email, it.phone, it.dni ?: "")
-                    }
-                }
-
-                override fun onFailure(call: Call<FarmerProfile>, t: Throwable) {}
-            })
-        }
-
-        btnSave.setOnClickListener {
-            val firstName = etFirstName.text.toString()
-            val lastName = etLastName.text.toString()
-            val email = etEmail.text.toString()
-            val phone = etPhone.text.toString()
-            val dni = etDni.text.toString().toIntOrNull() ?: return@setOnClickListener
-
-            val json = JsonObject().apply {
-                addProperty("firstName", firstName)
-                addProperty("lastName", lastName)
-                addProperty("email", email)
-                addProperty("phone", phone)
-                addProperty("photoUrl", "https://example.com/photo.jpg")
-                addProperty("dni", dni.toString())
-            }
-
-            if (role == "Consultor") {
-                api.updateConsultant(2, json).enqueue(object : Callback<ConsultantProfile> {
-                    override fun onResponse(call: Call<ConsultantProfile>, response: Response<ConsultantProfile>) {
-                        dialog.dismiss()
-                        loadProfile()
-                        showConfirmationDialog()
-                    }
-
-                    override fun onFailure(call: Call<ConsultantProfile>, t: Throwable) {}
-                })
-            } else {
-                api.updateFarmer(3, json).enqueue(object : Callback<FarmerProfile> {
-                    override fun onResponse(call: Call<FarmerProfile>, response: Response<FarmerProfile>) {
-                        dialog.dismiss()
-                        loadProfile()
-                        showConfirmationDialog()
-                    }
-
-                    override fun onFailure(call: Call<FarmerProfile>, t: Throwable) {}
-                })
-            }
+            super.onBackPressed()
         }
     }
 
@@ -281,13 +268,5 @@ class ProfileActivity : AppCompatActivity() {
             dialog.dismiss()
         }
         dialog.show()
-    }
-
-    override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START)
-        } else {
-            super.onBackPressed()
-        }
     }
 }

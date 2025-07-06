@@ -16,23 +16,16 @@
             android:id="@+id/et_activity_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:autofillHints=""
             android:hint="Seleccionar fecha"
             android:focusable="false"
             android:inputType="none" />
 
         <EditText
-            android:id="@+id/et_activity_time"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Seleccionar hora"
-            android:focusable="false"
-            android:inputType="none"
-            android:layout_marginTop="12dp" />
-
-        <EditText
             android:id="@+id/et_crop_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:autofillHints=""
             android:hint="Nombre del cultivo"
             android:enabled="false"
             android:inputType="text"
@@ -42,6 +35,7 @@
             android:id="@+id/et_activity_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:autofillHints=""
             android:hint="Descripción"
             android:inputType="textMultiLine"
             android:minLines="2"

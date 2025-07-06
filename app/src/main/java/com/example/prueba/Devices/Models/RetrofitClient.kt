@@ -1,5 +1,6 @@
 package com.example.prueba.Devices.Models
 
+import com.example.prueba.Crops.Models.AuthInterceptor
 import com.example.prueba.Devices.Interfaces.PlaceHolder
 import com.example.prueba.HttpUri
 import okhttp3.OkHttpClient
@@ -10,15 +11,12 @@ object RetrofitClient{
     private const val BASE_URL = HttpUri.url
 
     fun getClient(token: String): PlaceHolder {
-        /*
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(token))
             .build()
-        */
-
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
-            //.client(client)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(PlaceHolder::class.java)

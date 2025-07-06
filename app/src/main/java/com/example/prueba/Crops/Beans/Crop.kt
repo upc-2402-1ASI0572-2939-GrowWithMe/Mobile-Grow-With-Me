@@ -1,38 +1,43 @@
 package com.example.prueba.Crops.Beans
 
+import android.app.Activity
+
 class Crop {
-    var id: Int=0
-    var code: String
+    var id: Int
+    var farmerId: Int
+    var cropActivities: List<Activity>
     var productName: String
+    var code: String
     var category: String
-    var area: Int
-    var location: String
     var status: String
+    var area: Float
+    var location: String
     var cost: Int
-    var profitReturn: Int
-    var profileId: Int
+    var registrationDate: String
 
     constructor(
         id: Int,
-        code: String,
+        farmerId: Int,
+        cropActivities: List<Activity>,
         productName: String,
+        code: String,
         category: String,
-        area: Int,
-        location: String,
         status: String,
+        area: Float,
+        location: String,
         cost: Int,
-        profitReturn: Int,
-        profileId: Int
+        registrationDate: String
     ) {
         this.id = id
-        this.code = code
+        this.farmerId = farmerId
+        this.cropActivities = cropActivities
         this.productName = productName
+        this.code = code
         this.category = category
+        this.status = status
         this.area = area
         this.location = location
-        this.status = status
         this.cost = cost
-        this.profitReturn = profitReturn
-        this.profileId = profileId
+        this.registrationDate = registrationDate
     }
 }

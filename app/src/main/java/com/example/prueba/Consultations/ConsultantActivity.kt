@@ -13,6 +13,7 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.cloudinary.android.MediaManager
 import com.example.prueba.Consultants.Adapter.ConsultantAdapter
 import com.example.prueba.Consultations.Beans.Consultation
 import com.example.prueba.Consultations.Models.RetrofitClient
@@ -42,6 +43,20 @@ class ConsultantActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_consultants)
+
+        // ✅ Inicializar Cloudinary desde valores
+        try {
+            MediaManager.get() // intenta obtener instancia
+        } catch (e: Exception) {
+            val config = hashMapOf(
+                "cloud_name" to getString(R.string.cloudinary_cloud_name),
+                "api_key" to getString(R.string.cloudinary_api_key),
+                "api_secret" to getString(R.string.cloudinary_api_secret),
+                "secure" to "true"
+            )
+            MediaManager.init(this, config)
+        }
+
 
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -80,8 +95,6 @@ class ConsultantActivity : AppCompatActivity() {
             val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_register_consultation, null)
             val titleInput = dialogView.findViewById<EditText>(R.id.et_title)
             val descInput = dialogView.findViewById<EditText>(R.id.et_description)
-            val humidityInput = dialogView.findViewById<EditText>(R.id.et_humidity)
-            val tempInput = dialogView.findViewById<EditText>(R.id.et_temperature)
             val btnSend = dialogView.findViewById<Button>(R.id.btn_accept)
 
             val dialog = AlertDialog.Builder(this)
@@ -91,10 +104,8 @@ class ConsultantActivity : AppCompatActivity() {
             btnSend.setOnClickListener {
                 val title = titleInput.text.toString().trim()
                 val description = descInput.text.toString().trim()
-                val humidity = humidityInput.text.toString().toIntOrNull()
-                val temperature = tempInput.text.toString().toFloatOrNull()
 
-                if (title.isEmpty() || description.isEmpty() || humidity == null || temperature == null || humidity !in 0..100) {
+                if (title.isEmpty() || description.isEmpty()) {
                     Toast.makeText(this, "Completa correctamente todos los campos", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
@@ -105,12 +116,12 @@ class ConsultantActivity : AppCompatActivity() {
                     addProperty("id", 0)
                     addProperty("title", title)
                     addProperty("description", description)
-                    addProperty("humidity", humidity)
-                    addProperty("temperature", temperature)
                     addProperty("farmerId", 1)
                 }
 
-                val api = RetrofitClient.getClient("")
+                val prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE)
+                val token = prefs.getString("token", "") ?: ""
+                val api = RetrofitClient.getClient(token)
                 api.createConsultation(json).enqueue(object : Callback<Consultation> {
                     override fun onResponse(call: Call<Consultation>, response: Response<Consultation>) {
                         if (response.isSuccessful) {
@@ -141,7 +152,6 @@ class ConsultantActivity : AppCompatActivity() {
         btnHistory.setOnClickListener {
             startActivity(Intent(this, ConsultationActivity::class.java))
         }
-
 
         val api = RetrofitClientConsultant.getClient("")
         api.getAllConsultants().enqueue(object : Callback<List<ConsultantProfile>> {

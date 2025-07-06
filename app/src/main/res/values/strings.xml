@@ -38,5 +38,12 @@
     <string name="foto_perfil" />
     <string name="ver_consultas" />
     <string name="ver_cultivos" />
+    <string name="select_role">Seleccionar rol</string>
+    <string name="icon_type" />
+    <string-array name="roles_array">
+        <item>Agricultor</item>
+        <item>Consultor</item>
+    </string-array>
+    <string name="cloudinary_cloud_name" translatable="false">TU_CLOUD_NAME</string>
 
 </resources>

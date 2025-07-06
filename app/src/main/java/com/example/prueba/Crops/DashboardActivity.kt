@@ -3,10 +3,8 @@ package com.example.prueba.Monitoring
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.view.Menu
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -15,31 +13,38 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.prueba.Crops.CropsActivity
+import com.example.prueba.Devices.Beans.Device
+import com.example.prueba.Devices.DevicesActivity
+import com.example.prueba.Devices.Interfaces.PlaceHolder
+import com.example.prueba.Devices.Models.RetrofitClient
 import com.example.prueba.Notifications.NotificationsActivity
 import com.example.prueba.Profile.ProfileActivity
 import com.example.prueba.R
+import com.example.prueba.Consultations.ConsultantActivity
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.google.android.material.navigation.NavigationView
-import java.io.File
-import java.io.FileOutputStream
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class DashboardActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var toolbar: Toolbar
-    private lateinit var exportMessage: TextView
-    private lateinit var exportButton: Button
     private lateinit var navView: NavigationView
     private lateinit var lineChart: LineChart
+
+    private var temperatureList: List<Double> = emptyList()
+    private var humidityList: List<Double> = emptyList()
 
     private val isConsultant: Boolean
         get() {
             val prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE)
-            return prefs.getString("user_role", "Agricultor") == "Consultor"
+            return prefs.getString("role", "FARMER_ROLE") == "CONSULTANT_ROLE"
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,11 +57,8 @@ class DashboardActivity : AppCompatActivity() {
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
 
-        val toggle = ActionBarDrawerToggle(
-            this, drawerLayout, toolbar,
-            R.string.navigation_drawer_open,
-            R.string.navigation_drawer_close
-        )
+        val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar,
+            R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
@@ -64,84 +66,60 @@ class DashboardActivity : AppCompatActivity() {
 
         navView.setNavigationItemSelectedListener {
             when (it.itemId) {
-                R.id.nav_devices -> startActivity(Intent(this, com.example.prueba.Devices.DevicesActivity::class.java))
+                R.id.nav_devices -> startActivity(Intent(this, DevicesActivity::class.java))
                 R.id.nav_notifications -> startActivity(Intent(this, NotificationsActivity::class.java))
                 R.id.nav_profile -> startActivity(Intent(this, ProfileActivity::class.java))
-                R.id.nav_consultants -> startActivity(Intent(this, com.example.prueba.Consultations.ConsultantActivity::class.java))
+                R.id.nav_consultants -> startActivity(Intent(this, ConsultantActivity::class.java))
                 R.id.nav_crops -> startActivity(Intent(this, CropsActivity::class.java))
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true
         }
 
+        val cropId = intent.getIntExtra("cropId", -1).toLong()
         val cropName = intent.getStringExtra("cropName") ?: "Cultivo"
-        val titleTextView = findViewById<TextView>(R.id.tv_dashboard_title)
-        titleTextView.text = "Dashboard: $cropName"
-
-        exportMessage = findViewById(R.id.tv_export_message)
-        exportButton = findViewById(R.id.btn_export)
-
-        findViewById<TextView>(R.id.tv_temperature).text = "24.5°C"
-        findViewById<TextView>(R.id.tv_humidity).text = "65%"
-
-        exportButton.setOnClickListener {
-            exportDataToCSV()
-        }
+        findViewById<TextView>(R.id.tv_dashboard_title).text = "Dashboard: $cropName"
 
         lineChart = findViewById(R.id.line_chart)
-        setupChart()
-    }
 
-    private fun filterMenuByRole() {
-        val menu: Menu = navView.menu
-        if (isConsultant) {
-            menu.findItem(R.id.nav_consultants)?.title = "Agricultores"
-            menu.findItem(R.id.nav_devices)?.isVisible = false
+        if (cropId != -1L) {
+            fetchSensorData(cropId)
         } else {
-            menu.findItem(R.id.nav_crops)?.isVisible = true
-            menu.findItem(R.id.nav_consultants)?.title = "Consultores"
-            menu.findItem(R.id.nav_devices)?.isVisible = true
+            Toast.makeText(this, "ID de cultivo no válido (cropId = -1)", Toast.LENGTH_LONG).show()
         }
     }
 
-    private fun exportDataToCSV() {
-        val csvData = StringBuilder()
-        csvData.append("Date,Temperature,Humidity\n")
-        csvData.append("2025-05-15,24.5°C,65%\n")
-        csvData.append("2025-05-16,25.0°C,60%\n")
-        csvData.append("2025-05-17,23.8°C,70%\n")
+    private fun fetchSensorData(cropId: Long) {
+        val token = getSharedPreferences("MyPrefs", MODE_PRIVATE).getString("authToken", "") ?: ""
+        val api: PlaceHolder = RetrofitClient.getClient(token)
 
-        try {
-            val folder = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "ExportedData")
-            if (!folder.exists()) folder.mkdirs()
+        api.getSensorData(cropId).enqueue(object : Callback<Device> {
+            override fun onResponse(call: Call<Device>, response: Response<Device>) {
+                if (response.isSuccessful && response.body() != null) {
+                    val device = response.body()!!
+                    temperatureList = device.temperatureList
+                    humidityList = device.humidityList
 
-            val file = File(folder, "Dashboard_Data.csv")
-            FileOutputStream(file).use { it.write(csvData.toString().toByteArray()) }
+                    findViewById<TextView>(R.id.tv_temperature).text =
+                        "${temperatureList.lastOrNull() ?: "--"}°C"
+                    findViewById<TextView>(R.id.tv_humidity).text =
+                        "${humidityList.lastOrNull() ?: "--"}%"
 
-            exportMessage.text = "¡Datos exportados con éxito!\nArchivo: ${file.name}"
-        } catch (e: Exception) {
-            Log.e("EXPORT", "Error al exportar datos", e)
-            exportMessage.text = "Error al exportar los datos."
-        }
+                    updateChart(temperatureList, humidityList)
+                } else {
+                    Toast.makeText(this@DashboardActivity, "Datos no disponibles", Toast.LENGTH_SHORT).show()
+                }
+            }
 
-        exportMessage.visibility = TextView.VISIBLE
-        exportMessage.postDelayed({
-            exportMessage.visibility = TextView.GONE
-        }, 3000)
+            override fun onFailure(call: Call<Device>, t: Throwable) {
+                Toast.makeText(this@DashboardActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
-    private fun setupChart() {
-        val entriesTemp = listOf(
-            Entry(0f, 24.5f),
-            Entry(1f, 25.0f),
-            Entry(2f, 23.8f)
-        )
-
-        val entriesHumidity = listOf(
-            Entry(0f, 65f),
-            Entry(1f, 60f),
-            Entry(2f, 70f)
-        )
+    private fun updateChart(temps: List<Double>, hums: List<Double>) {
+        val entriesTemp = temps.mapIndexed { index, value -> Entry(index.toFloat(), value.toFloat()) }
+        val entriesHumidity = hums.mapIndexed { index, value -> Entry(index.toFloat(), value.toFloat()) }
 
         val dataSetTemp = LineDataSet(entriesTemp, "Temperatura").apply {
             color = Color.RED
@@ -159,11 +137,22 @@ class DashboardActivity : AppCompatActivity() {
 
         val lineData = LineData(dataSetTemp, dataSetHumidity)
         lineChart.data = lineData
-
         lineChart.axisRight.isEnabled = false
         lineChart.xAxis.position = XAxis.XAxisPosition.BOTTOM
         lineChart.description.text = ""
         lineChart.invalidate()
+    }
+
+    private fun filterMenuByRole() {
+        val menu: Menu = navView.menu
+        if (isConsultant) {
+            menu.findItem(R.id.nav_consultants)?.title = "Agricultores"
+            menu.findItem(R.id.nav_devices)?.isVisible = false
+        } else {
+            menu.findItem(R.id.nav_crops)?.isVisible = true
+            menu.findItem(R.id.nav_consultants)?.title = "Consultores"
+            menu.findItem(R.id.nav_devices)?.isVisible = true
+        }
     }
 
     override fun onBackPressed() {

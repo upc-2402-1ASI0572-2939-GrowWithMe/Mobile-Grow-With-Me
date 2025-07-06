@@ -8,9 +8,14 @@ import com.example.prueba.Devices.ViewHolders.DeviceViewHolder
 import com.example.prueba.R
 
 class DeviceAdapter(
-    private val devices: List<Device>,
-    private val onToggleStatus: (Device) -> Unit
+    private val devices: List<Device>
 ) : RecyclerView.Adapter<DeviceViewHolder>() {
+
+    private var cropNameMap: Map<Int, String> = emptyMap()
+
+    fun updateCropsMap(newMap: Map<Int, String>) {
+        cropNameMap = newMap
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_devices, parent, false)
@@ -18,7 +23,7 @@ class DeviceAdapter(
     }
 
     override fun onBindViewHolder(holder: DeviceViewHolder, position: Int) {
-        holder.bind(devices[position], onToggleStatus)
+        holder.bind(devices[position], cropNameMap)
     }
 
     override fun getItemCount(): Int = devices.size

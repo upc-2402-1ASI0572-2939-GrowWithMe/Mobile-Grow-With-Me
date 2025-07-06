@@ -1,57 +1,47 @@
 package com.example.prueba
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
-import com.example.prueba.Crops.CropsActivity
+import com.example.prueba.Login.LoginActivity
+import com.example.prueba.Register.RegisterActivity
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var txtRole: TextView
     private lateinit var drawerLayout: DrawerLayout
-
-    private val roles = listOf("Agricultor", "Consultor")
-    private var currentRoleIndex = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Toolbar
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-
-        // Views
         drawerLayout = findViewById(R.id.drawer_layout)
-        txtRole = findViewById(R.id.txt_role)
-        val btnSwitchRole = findViewById<Button>(R.id.btn_switch_role)
 
-        // Cargar rol desde SharedPreferences
-        val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-        val savedRole = prefs.getString("user_role", roles[0])
-        currentRoleIndex = roles.indexOf(savedRole)
-        updateRoleUI()
+        val btnRegister = findViewById<Button>(R.id.btn_register)
+        val btnLogin = findViewById<Button>(R.id.btn_login)
 
-        btnSwitchRole.setOnClickListener {
-            currentRoleIndex = (currentRoleIndex + 1) % roles.size
-            val newRole = roles[currentRoleIndex]
-
-            txtRole.text = "Rol actual: $newRole"
-            prefs.edit().putString("user_role", newRole).apply()
-        }
-        val btnStart = findViewById<Button>(R.id.btn_start)
-        btnStart.setOnClickListener {
-            startActivity(Intent(this, CropsActivity::class.java))
+        btnRegister.setOnClickListener {
+            // Lógica para ir a pantalla de registro
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
 
-    }
+        btnLogin.setOnClickListener {
+            val prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE)
+            val token = prefs.getString("token", null)
+            val userId = prefs.getInt("user_id", -1)
+            val role = prefs.getString("role", null)
 
-    private fun updateRoleUI() {
-        txtRole.text = "Rol actual: ${roles[currentRoleIndex]}"
+            if (!token.isNullOrEmpty() && userId != -1 && !role.isNullOrEmpty()) {
+                // Ya está logueado, ir directo al HomeActivity
+                val intent = Intent(this, com.example.prueba.Home.HomeActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+            } else {
+                // Si no está logueado, ir al LoginActivity
+                startActivity(Intent(this, LoginActivity::class.java))
+            }
+        }
+
     }
 }

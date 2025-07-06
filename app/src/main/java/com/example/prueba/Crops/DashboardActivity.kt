@@ -1,15 +1,20 @@
 package com.example.prueba.Monitoring
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.Menu
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.edit
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.prueba.Crops.CropsActivity
@@ -21,6 +26,8 @@ import com.example.prueba.Notifications.NotificationsActivity
 import com.example.prueba.Profile.ProfileActivity
 import com.example.prueba.R
 import com.example.prueba.Consultations.ConsultantActivity
+import com.example.prueba.Consultations.ConsultationActivity
+import com.example.prueba.MainActivity
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
@@ -66,11 +73,38 @@ class DashboardActivity : AppCompatActivity() {
 
         navView.setNavigationItemSelectedListener {
             when (it.itemId) {
-                R.id.nav_devices -> startActivity(Intent(this, DevicesActivity::class.java))
-                R.id.nav_notifications -> startActivity(Intent(this, NotificationsActivity::class.java))
-                R.id.nav_profile -> startActivity(Intent(this, ProfileActivity::class.java))
-                R.id.nav_consultants -> startActivity(Intent(this, ConsultantActivity::class.java))
-                R.id.nav_crops -> startActivity(Intent(this, CropsActivity::class.java))
+                R.id.nav_devices -> {
+                    startActivity(Intent(this, DevicesActivity::class.java))
+                    finish()
+                }
+                R.id.nav_notifications -> {
+                    val target = if (isConsultant)
+                        ConsultationActivity::class.java
+                    else
+                        NotificationsActivity::class.java
+                    startActivity(Intent(this, target))
+                    finish()
+                }
+                R.id.nav_profile -> {
+                    startActivity(Intent(this, ProfileActivity::class.java))
+                    finish()
+                }
+                R.id.nav_consultants -> {
+                    startActivity(Intent(this, ConsultantActivity::class.java))
+                    finish()
+                }
+                R.id.nav_crops -> {
+                    startActivity(Intent(this, CropsActivity::class.java))
+                    finish()
+                }
+                R.id.btn_logout -> {
+                    val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+                    prefs.edit { clear() }
+                    startActivity(Intent(this, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    })
+                    finish()
+                }
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true
@@ -145,7 +179,10 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun filterMenuByRole() {
         val menu: Menu = navView.menu
-        if (isConsultant) {
+        val prefs = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        val role = prefs.getString("role", "FARMER_ROLE")
+
+        if (role == "CONSULTANT_ROLE") {
             menu.findItem(R.id.nav_consultants)?.title = "Agricultores"
             menu.findItem(R.id.nav_devices)?.isVisible = false
         } else {

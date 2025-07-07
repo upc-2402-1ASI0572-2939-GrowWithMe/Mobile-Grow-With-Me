@@ -16,13 +16,13 @@ import com.example.prueba.Crops.Models.RetrofitClient as CropsRetrofitClient
 import com.example.prueba.Devices.Models.RetrofitClient as DevicesRetrofitClient
 import com.example.prueba.Devices.Adapter.DeviceAdapter
 import com.example.prueba.Devices.Beans.Device
+import com.example.prueba.Devices.Beans.DeviceSchema
 import com.example.prueba.Notifications.NotificationsActivity
 import com.example.prueba.Profile.ProfileActivity
 import com.example.prueba.R
 import com.example.prueba.Crops.CropsActivity
 import com.example.prueba.Farmers.FarmerActivity
 import com.google.android.material.navigation.NavigationView
-import com.google.gson.JsonObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -37,11 +37,13 @@ class DevicesActivity : AppCompatActivity() {
     private var devices = mutableListOf<Device>()
     private var cropsMap = mutableMapOf<Int, String>()
     private var farmerId = -1
+
     private val isConsultant: Boolean
         get() {
             val prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE)
             return prefs.getString("user_role", "Agricultor") == "Consultor"
         }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_devices)
@@ -86,7 +88,7 @@ class DevicesActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recycler_devices)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = DeviceAdapter(devices) // sin toggle
+        adapter = DeviceAdapter(devices)
         recyclerView.adapter = adapter
 
         findViewById<Button>(R.id.btn_register_device).setOnClickListener {
@@ -95,6 +97,7 @@ class DevicesActivity : AppCompatActivity() {
 
         loadCropsThenDevices()
     }
+
     private fun loadCropsThenDevices() {
         val prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE)
         val token = prefs.getString("token", "") ?: ""
@@ -118,7 +121,7 @@ class DevicesActivity : AppCompatActivity() {
     }
 
     private fun loadDevices(token: String) {
-        DevicesRetrofitClient.getClient(token).getDevicesByFarmerId(farmerId.toString())
+        DevicesRetrofitClient.getClient(token).getDevicesByFarmerId()
             .enqueue(object : Callback<List<Device>> {
                 override fun onResponse(call: Call<List<Device>>, response: Response<List<Device>>) {
                     if (response.isSuccessful) {
@@ -160,32 +163,39 @@ class DevicesActivity : AppCompatActivity() {
             val prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE)
             val token = prefs.getString("token", "") ?: ""
 
-            DevicesRetrofitClient.getClient(token).createDevice(
-                cropId = selectedCropId.toLong(),
+            val farmerId = getSharedPreferences("MyPrefs", MODE_PRIVATE).getInt("user_id", -1)
+
+            val schema = DeviceSchema(
+                cropId = selectedCropId,
                 farmerId = farmerId,
                 name = name,
-                isActive = true
-            ).enqueue(object : Callback<Device> {
-                override fun onResponse(call: Call<Device>, response: Response<Device>) {
-                    if (response.isSuccessful) {
-                        response.body()?.let {
-                            devices.add(it)
-                            adapter.notifyDataSetChanged()
-                            alertDialog.dismiss()
-                            showStatusDialog("Dispositivo registrado")
+                temperatureList = emptyList(),
+                humidityList = emptyList(),
+                isActive = false
+            )
+
+
+            DevicesRetrofitClient.getClient(token).createDevice(schema)
+                .enqueue(object : Callback<Device> {
+                    override fun onResponse(call: Call<Device>, response: Response<Device>) {
+                        if (response.isSuccessful) {
+                            response.body()?.let {
+                                devices.add(it)
+                                adapter.notifyDataSetChanged()
+                                alertDialog.dismiss()
+                                showStatusDialog("Dispositivo registrado")
+                            }
                         }
                     }
-                }
 
-                override fun onFailure(call: Call<Device>, t: Throwable) {
-                    t.printStackTrace()
-                }
-            })
+                    override fun onFailure(call: Call<Device>, t: Throwable) {
+                        t.printStackTrace()
+                    }
+                })
         }
 
         alertDialog.show()
     }
-
 
     private fun showStatusDialog(msg: String) {
         AlertDialog.Builder(this)
